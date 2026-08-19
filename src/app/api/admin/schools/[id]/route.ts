@@ -108,21 +108,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     // ── 2. Invite the school contact as super_admin ──
+    const schoolAppUrl = process.env.SCHOOL_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
     const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(school!.contact_email, {
       data: {
         role: 'super_admin',
         school_id: id,
         full_name: `${school!.name} Admin`
       },
-      redirectTo: 'http://localhost:3001/auth/callback?next=/auth/complete-profile'
+      redirectTo: `${schoolAppUrl}/auth/callback?next=/auth/complete-profile`
     });
 
     if (inviteError && !inviteError.message.includes('already registered')) {
-      return NextResponse.json(
-        { error: `Failed to send invite email: ${inviteError.message}` },
-        { status: 500 }
-      );
+      console.error("Invite error (non-fatal):", inviteError.message);
+      // Non-fatal: continue with approval even if invite fails
+      // The admin can manually create the user later
     }
+
     
     // ── 3. If user already existed in auth, update their metadata ──
     if (inviteError && inviteError.message.includes('already registered')) {
