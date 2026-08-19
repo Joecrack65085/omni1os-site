@@ -1,7 +1,5 @@
-import type { NextConfig } from "next";
-
-// @ts-expect-error - NextConfig type might be strictly missing eslint in this TS version
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   images: {
     remotePatterns: [
