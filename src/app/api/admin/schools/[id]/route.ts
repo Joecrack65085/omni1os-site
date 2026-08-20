@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { requirePlatformAdmin } from "@/lib/requirePlatformAdmin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -42,6 +43,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const check = await requirePlatformAdmin();
   if (!check.ok) return NextResponse.json({ error: check.error }, { status: check.status });
+  let approvalInviteLink: string | null = null;
 
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
@@ -107,44 +109,52 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       // Non-fatal: continue with the approval even if seeding fails
     }
 
-    // ── 2. Invite the school contact as super_admin ──
-    const schoolAppUrl = process.env.SCHOOL_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
-    const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(school!.contact_email, {
-      data: {
-        role: 'super_admin',
+    // ── 2. Generate a one-time invite link for the school contact ──
+    // Same mechanism as staff invites in the Omni1OS app: no auth user is
+    // created here, and nothing goes through Supabase's mailer — the link
+    // itself carries everything needed, stays valid until first opened
+    // (not on a timer), and is spent the moment it's clicked.
+    const appUrl = process.env.NEXT_PUBLIC_OMNI1OS_APP_URL ?? "http://localhost:3001";
+
+    const { data: existingProfile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("email", school!.contact_email)
+      .maybeSingle();
+
+    let inviteLink: string | null = null;
+
+    if (existingProfile) {
+      // Contact email already has an account elsewhere — just promote it
+      // to super_admin for this school directly, no link needed.
+      await admin
+        .from("profiles")
+        .update({ role: "super_admin", school_id: id, first_login_done: false })
+        .eq("id", existingProfile.id);
+    } else {
+      // Retire any earlier unclicked invite for this school before issuing
+      // a new one, so only the latest link is ever valid.
+      await admin
+        .from("school_invite_tokens")
+        .update({ opened_at: new Date().toISOString() })
+        .eq("school_id", id)
+        .is("completed_at", null)
+        .is("opened_at", null);
+
+      const token = randomBytes(32).toString("base64url");
+      const { error: tokenErr } = await admin.from("school_invite_tokens").insert({
+        token,
         school_id: id,
-        full_name: `${school!.name} Admin`
-      },
-      redirectTo: `${schoolAppUrl}/auth/callback?next=/auth/complete-profile`
-    });
-
-    if (inviteError && !inviteError.message.includes('already registered')) {
-      console.error("Invite error (non-fatal):", inviteError.message);
-      // Non-fatal: continue with approval even if invite fails
-      // The admin can manually create the user later
-    }
-
-    
-    // ── 3. If user already existed in auth, update their metadata ──
-    if (inviteError && inviteError.message.includes('already registered')) {
-      const { data: existingUsers } = await admin.auth.admin.listUsers();
-      const existing = existingUsers?.users.find(u => u.email === school!.contact_email);
-      if (existing) {
-         await admin.auth.admin.updateUserById(existing.id, {
-           user_metadata: {
-             ...existing.user_metadata,
-             role: 'super_admin',
-             school_id: id
-           }
-         });
-         // Also update their profile to super_admin
-         await admin.from("profiles").update({
-           role: 'super_admin',
-           school_id: id,
-           first_login_done: false,
-         }).eq("id", existing.id);
+        email: school!.contact_email,
+        full_name: `${school!.name} Admin`,
+        created_by: check.admin.id,
+      });
+      if (tokenErr) {
+        return NextResponse.json({ error: `Failed to create invite: ${tokenErr.message}` }, { status: 500 });
       }
+      inviteLink = `${appUrl}/school-invite/${token}`;
     }
+    approvalInviteLink = inviteLink;
   }
 
   const update: Record<string, unknown> = { status: STATUS_BY_ACTION[action], updated_at: new Date().toISOString() };
@@ -161,7 +171,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, inviteLink: approvalInviteLink });
 }
 
 

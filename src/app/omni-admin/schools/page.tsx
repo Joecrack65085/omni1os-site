@@ -60,6 +60,8 @@ function SchoolsPageInner() {
   const [viewId, setViewId] = useState<string | null>(null);
   const [viewData, setViewData] = useState<SchoolDetail | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
+  const [inviteModal, setInviteModal] = useState<{ link: string } | null>(null);
+  const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
 
   async function openView(id: string) {
     setViewId(id);
@@ -100,7 +102,11 @@ function SchoolsPageInner() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Action failed");
-      toast.success("Updated");
+      if (action === "approve" && json.inviteLink) {
+        setInviteModal({ link: json.inviteLink });
+      } else {
+        toast.success("Updated");
+      }
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Action failed");
@@ -305,6 +311,52 @@ function SchoolsPageInner() {
               className="mt-6 w-full rounded-md border border-[var(--border)] py-2 text-sm text-[var(--text-dim)] hover:text-[var(--text)]"
             >
               Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {inviteModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setInviteModal(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-2xl">🔗</p>
+            <h2 className="mt-2 font-display text-lg font-semibold">School approved — invite link ready</h2>
+            <p className="mt-1.5 text-sm text-[var(--text-dim)]">
+              This link works exactly once and never expires on its own — it stays valid until the moment
+              it&apos;s opened, then it&apos;s spent for good. Send it to the school&apos;s contact email however you like.
+            </p>
+
+            <div className="mt-4 rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-xs font-data text-[var(--text-dim)] break-all">
+              {inviteModal.link}
+            </div>
+
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(inviteModal.link);
+                  setInviteLinkCopied(true);
+                }}
+                className="flex-1 rounded-md py-2.5 text-sm font-medium text-white"
+                style={{ background: inviteLinkCopied ? "#166534" : "var(--gradient-brand)" }}
+              >
+                {inviteLinkCopied ? "✓ Copied!" : "📋 Copy Link"}
+              </button>
+            </div>
+
+            <button
+              onClick={() => {
+                setInviteModal(null);
+                setInviteLinkCopied(false);
+              }}
+              className="mt-3 w-full rounded-md border border-[var(--border)] py-2 text-sm text-[var(--text-dim)] hover:text-[var(--text)]"
+            >
+              Done
             </button>
           </div>
         </div>
