@@ -114,7 +114,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     // created here, and nothing goes through Supabase's mailer — the link
     // itself carries everything needed, stays valid until first opened
     // (not on a timer), and is spent the moment it's clicked.
-    const appUrl = process.env.NEXT_PUBLIC_OMNI1OS_APP_URL ?? "http://localhost:3001";
+    const appUrl = process.env.NEXT_PUBLIC_OMNI1OS_APP_URL ?? "https://omni1os-app.vercel.app";
 
     const { data: existingProfile } = await admin
       .from("profiles")
