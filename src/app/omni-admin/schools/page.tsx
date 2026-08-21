@@ -144,12 +144,12 @@ function SchoolsPageInner() {
         </div>
       </div>
 
-      <div className="mt-5 flex gap-2">
+      <div className="mt-5 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 sm:pb-0 sm:flex-wrap">
         {["all", "pending", "active", "suspended", "deactivated", "rejected"].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`rounded-full border px-3 py-1.5 text-xs capitalize ${filter === f ? "border-[var(--purple)] text-[var(--text)]" : "border-[var(--border)] text-[var(--text-dim)]"
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs capitalize ${filter === f ? "border-[var(--purple)] text-[var(--text)]" : "border-[var(--border)] text-[var(--text-dim)]"
               }`}
           >
             {f}
@@ -157,7 +157,9 @@ function SchoolsPageInner() {
         ))}
       </div>
 
-      <div className="mt-5 overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border)]">
+      <p className="mt-3 text-[11px] text-[var(--text-faint)] sm:hidden">Swipe the table sideways to see more →</p>
+
+      <div className="mt-2 overflow-x-auto rounded-[var(--radius-md)] border border-[var(--border)] sm:mt-5">
         <table className="w-full min-w-[860px] text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--border)] text-xs text-[var(--text-dim)]">
