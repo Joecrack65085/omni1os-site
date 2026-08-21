@@ -149,9 +149,8 @@ function SchoolsPageInner() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`rounded-full border px-3 py-1.5 text-xs capitalize ${
-              filter === f ? "border-[var(--purple)] text-[var(--text)]" : "border-[var(--border)] text-[var(--text-dim)]"
-            }`}
+            className={`rounded-full border px-3 py-1.5 text-xs capitalize ${filter === f ? "border-[var(--purple)] text-[var(--text)]" : "border-[var(--border)] text-[var(--text-dim)]"
+              }`}
           >
             {f}
           </button>
@@ -288,7 +287,7 @@ function SchoolsPageInner() {
 
                 {!viewData.settings ? (
                   <p className="mt-4 text-sm text-[var(--text-dim)]">
-                    This school hasn&apos;t completed onboarding yet — details below reflect the initial
+                    This school hasn&apos;t completed onboarding yet, details below reflect the initial
                     registration only, not their live School Info settings.
                   </p>
                 ) : null}
@@ -392,9 +391,8 @@ function ActionBtn({
       title={title}
       onClick={onClick}
       disabled={busy}
-      className={`rounded-md p-1.5 hover:bg-[var(--surface)] disabled:opacity-40 ${
-        danger ? "text-red-300" : "text-[var(--text-dim)] hover:text-[var(--text)]"
-      }`}
+      className={`rounded-md p-1.5 hover:bg-[var(--surface)] disabled:opacity-40 ${danger ? "text-red-300" : "text-[var(--text-dim)] hover:text-[var(--text)]"
+        }`}
     >
       <Icon size={14} />
     </button>

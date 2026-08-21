@@ -25,14 +25,23 @@ export default function AdminShell({ admin, children }: { admin: Admin; children
   }
 
   return (
-    <div className="flex min-h-screen bg-[var(--bg)] text-[var(--text)]">
-      <aside className="flex w-60 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--bg-elevated)] p-5">
-        <div className="mb-8 flex items-center gap-2 px-1">
-          <img src="/brand/omni1os-logo.png" alt="" className="h-7 w-7 object-contain" />
-          <span className="font-display text-sm font-semibold">Omni1OS Admin</span>
+    <div className="flex min-h-screen flex-col md:flex-row bg-[var(--bg)] text-[var(--text)]">
+      <aside className="flex w-full md:w-60 shrink-0 flex-col border-b md:border-b-0 md:border-r border-[var(--border)] bg-[var(--bg-elevated)] p-5 md:sticky md:top-0 md:h-screen z-10">
+        <div className="mb-4 md:mb-8 flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <img src="/brand/omni1os-logo.png" alt="" className="h-7 w-7 object-contain" />
+            <span className="font-display text-sm font-semibold">Omni1OS Admin</span>
+          </div>
+          {/* On mobile, show a quick sign out button in the header instead of bottom */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-xs text-[var(--text-dim)] hover:text-[var(--text)] md:hidden"
+          >
+            <LogOut size={14} /> Sign out
+          </button>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1">
+        <nav className="flex flex-row flex-wrap md:flex-col gap-1 overflow-x-auto pb-2 md:pb-0">
           {NAV.map((item) => {
             const active = pathname === item.href;
             const Icon = item.icon;
@@ -40,7 +49,7 @@ export default function AdminShell({ admin, children }: { admin: Admin; children
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-sm ${
+                className={`flex shrink-0 items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-sm ${
                   active ? "bg-[var(--surface)] text-[var(--text)]" : "text-[var(--text-dim)] hover:bg-[var(--surface)]"
                 }`}
               >
@@ -51,7 +60,7 @@ export default function AdminShell({ admin, children }: { admin: Admin; children
           })}
         </nav>
 
-        <div className="mt-auto border-t border-[var(--border)] pt-4">
+        <div className="mt-auto hidden border-t border-[var(--border)] pt-4 md:block">
           <p className="truncate text-xs text-[var(--text-dim)]">{admin.full_name || admin.email}</p>
           <p className="text-[11px] text-[var(--text-faint)]">{admin.is_super_admin ? "Super admin" : "Admin"}</p>
           <button
@@ -63,7 +72,7 @@ export default function AdminShell({ admin, children }: { admin: Admin; children
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-8">
+      <main className="flex-1 p-4 md:p-8 min-w-0">
         <AdminProvider admin={admin}>{children}</AdminProvider>
       </main>
     </div>
